@@ -1,16 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-gradient: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+  --bg-gradient: #000000;
   --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(255, 255, 255, 0.1);
   --text-primary: #ffffff;
-  --text-secondary: #a0a0b0;
-  --accent-color: #6c63ff;
-  --accent-hover: #5a52d5;
-  --error-color: #ff6b6b;
-  --success-color: #2bcbba;
+  --text-secondary: #ffffff;
+  --accent-color: #ffffff;
+  --accent-hover: #ffffff;
+  --error-color: #ffffff;
+  --success-color: #ffffff;
 }
 
 * {
@@ -57,7 +57,7 @@ body {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 8px;
-  background: linear-gradient(90deg, #fff, #a0a0b0);
+  background: #ffffff;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -99,7 +99,7 @@ body {
 
 .form-control:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
   background: rgba(0, 0, 0, 0.3);
 }
 
@@ -136,6 +136,7 @@ body {
 .swap-btn:hover {
   background: var(--accent-color);
   border-color: var(--accent-color);
+  color: #000000;
   transform: rotate(180deg);
 }
 
@@ -192,16 +193,69 @@ body {
   }
 }
 
-select.form-control {
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px top 50%;
-  background-size: 12px auto;
-  padding-right: 40px;
+/* Custom Select styles */
+.custom-select {
+  position: relative;
+  width: 100%;
 }
 
-select.form-control option {
-  background: #2a2a40;
-  color: #fff;
+.custom-select.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.selected-value {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.options-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #000000;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  margin-top: 4px;
+  max-height: 200px; /* Limits to ~5 items */
+  overflow-y: auto;
+  z-index: 10;
+  list-style: none;
+  padding: 8px 0;
+  box-shadow: 0 8px 32px 0 rgba(255, 255, 255, 0.2);
+}
+
+.options-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.options-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.options-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.options-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.options-list .option {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  color: #ffffff;
+  user-select: none;
+}
+
+.options-list .option:hover,
+.options-list .option.selected {
+  background: rgba(255, 255, 255, 0.2);
 }
