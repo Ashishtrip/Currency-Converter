@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import { PreferencesProvider } from './context/PreferencesContext';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('renders global converter header', () => {
+  render(
+    <PreferencesProvider>
+      <App />
+    </PreferencesProvider>
+  );
+  const headerElement = screen.getByText(/Global Converter/i);
+  expect(headerElement).toBeInTheDocument();
 });

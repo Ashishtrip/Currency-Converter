@@ -2,10 +2,20 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePreferences } from '../context/PreferencesContext';
 import CurrencySelect from './CurrencySelect';
 import AmountInput from './AmountInput';
+import Header from './Header';
+import ErrorMessage from './ErrorMessage';
+import ResultDisplay from './ResultDisplay';
+import { convertCurrency, formatRate } from '../utils/conversion';
 
-const API_URL = 'https://open.er-api.com/v6/latest/USD';
+const BASE_API_URL = 'https://open.er-api.com/v6/latest';
 
+/**
+ * Main CurrencyConverter component.
+ * Handles state for amount, source/target currencies, and exchange rates.
+ * Fetches real-time data and provides an interface for conversion.
+ */
 const CurrencyConverter = () => {
+  // Access global preferences from context
   const {
     defaultSourceCurrency,
     setDefaultSourceCurrency,
@@ -13,6 +23,7 @@ const CurrencyConverter = () => {
     setDefaultTargetCurrency,
   } = usePreferences();
 
+  // Local state for the converter
   const [amount, setAmount] = useState('1');
   const [sourceCurrency, setSourceCurrency] = useState(defaultSourceCurrency);
   const [targetCurrency, setTargetCurrency] = useState(defaultTargetCurrency);
@@ -20,12 +31,16 @@ const CurrencyConverter = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch exchange rates
+  /**
+   * Fetches the latest exchange rates from the API.
+   * Uses the selected sourceCurrency as the base to ensure accurate relative rates.
+   * dependencies: [sourceCurrency]
+   */
   const fetchRates = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(API_URL);
+      const response = await fetch(`${BASE_API_URL}/${sourceCurrency}`);
       if (!response.ok) {
         throw new Error('Failed to fetch exchange rates');
       }
@@ -36,16 +51,23 @@ const CurrencyConverter = () => {
       setError('Unable to fetch exchange rates. Please check your connection and try again later.');
       setLoading(false);
     }
-  }, []);
+  }, [sourceCurrency]);
 
-  // Fetch on mount and set up interval for real-time updates (every 2 minutes)
+  /**
+   * EFFECT: Triggers an initial fetch on mount and sets up a 2-minute refresh interval.
+   * The interval is cleared on unmount to prevent memory leaks.
+   * Re-runs whenever fetchRates (and thus sourceCurrency) changes.
+   */
   useEffect(() => {
     fetchRates();
     const interval = setInterval(fetchRates, 120000);
     return () => clearInterval(interval);
   }, [fetchRates]);
 
-  // Update preferences when currencies change
+  /**
+   * EFFECT: Synchronize local currency state with persistent preferences.
+   * These update whenever the user selects a new currency.
+   */
   useEffect(() => {
     setDefaultSourceCurrency(sourceCurrency);
   }, [sourceCurrency, setDefaultSourceCurrency]);
@@ -54,47 +76,40 @@ const CurrencyConverter = () => {
     setDefaultTargetCurrency(targetCurrency);
   }, [targetCurrency, setDefaultTargetCurrency]);
 
+  /**
+   * Handler to swap source and target currencies.
+   */
   const handleSwap = () => {
     setSourceCurrency(targetCurrency);
     setTargetCurrency(sourceCurrency);
   };
 
-  // Optimize conversion calculations using useMemo
+  /**
+   * MEMO: Calculates the converted amount based on fetched rates.
+   * Uses the utility function for the actual math to keep component clean.
+   */
   const convertedAmount = useMemo(() => {
-    if (!rates || !amount || isNaN(amount)) return '0.00';
-    const amountNum = parseFloat(amount);
-    
-    // Cross-rate calculation (since base is USD)
-    const sourceRate = rates[sourceCurrency];
-    const targetRate = rates[targetCurrency];
-    
-    if (!sourceRate || !targetRate) return '0.00';
-    
-    const result = amountNum * (targetRate / sourceRate);
-    return result.toFixed(2);
-  }, [amount, sourceCurrency, targetCurrency, rates]);
+    const rate = rates ? rates[targetCurrency] : null;
+    return convertCurrency(amount, rate);
+  }, [amount, targetCurrency, rates]);
 
-  // Current exchange rate (1 Source = X Target)
+  /**
+   * MEMO: Formats the current exchange rate for display (1 Source = X Target).
+   */
   const currentRate = useMemo(() => {
-    if (!rates || !rates[sourceCurrency] || !rates[targetCurrency]) return null;
-    const rate = rates[targetCurrency] / rates[sourceCurrency];
-    return rate.toFixed(4);
-  }, [sourceCurrency, targetCurrency, rates]);
+    const rate = rates ? rates[targetCurrency] : null;
+    return formatRate(rate);
+  }, [targetCurrency, rates]);
 
+  // Derived list of currency codes for the dropdowns
   const currencies = rates ? Object.keys(rates) : [];
 
   return (
     <div className="converter-container">
-      <div className="header">
-        <h1>Global Converter</h1>
-        <p>Real-time live exchange rates</p>
-      </div>
+      <Header />
 
       {error ? (
-        <div className="error-message">
-          <p>{error}</p>
-          <button onClick={fetchRates} style={{marginTop: '10px', padding: '5px 10px', cursor: 'pointer', background: 'transparent', border: '1px solid currentColor', color: 'inherit', borderRadius: '4px'}}>Retry</button>
-        </div>
+        <ErrorMessage error={error} onRetry={fetchRates} />
       ) : (
         <>
           <AmountInput
@@ -135,22 +150,14 @@ const CurrencyConverter = () => {
             />
           </div>
 
-          <div className="result-section">
-            {loading && !rates ? (
-              <div className="loading-message">Fetching latest rates...</div>
-            ) : (
-              <>
-                <div className="result-amount">
-                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: targetCurrency }).format(convertedAmount)}
-                </div>
-                {currentRate && (
-                  <div className="result-rate">
-                    1 {sourceCurrency} = {currentRate} {targetCurrency}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <ResultDisplay 
+            loading={loading}
+            rates={rates}
+            targetCurrency={targetCurrency}
+            sourceCurrency={sourceCurrency}
+            convertedAmount={convertedAmount}
+            currentRate={currentRate}
+          />
         </>
       )}
     </div>

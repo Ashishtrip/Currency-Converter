@@ -20,6 +20,7 @@ const getFlagEmoji = (currencyCode) => {
     return specialCases[currencyCode];
   }
 
+  // Non-fiat currencies usually start with X, default to plain flag
   if (currencyCode.startsWith('X')) {
       return '🏳️';
   }
